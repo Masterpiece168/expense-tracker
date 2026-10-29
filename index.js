@@ -1,5 +1,6 @@
 // 1. Load the Express library (like an import in Java)
 const express = require('express');
+const db = require('./db');
 
 // 2. Create the app
 const app = express();
