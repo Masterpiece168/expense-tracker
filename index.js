@@ -92,6 +92,19 @@ app.post('/api/expenses', (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid });
 });
 
+app.delete('/api/expenses/:id', (req, res) => {
+  const result = db
+    .prepare('DELETE FROM expenses WHERE id = ? AND user_id = ?')
+    .run(req.params.id, USER_ID);
+
+  // result.changes = how many rows were deleted
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Expense not found' });
+  }
+
+  res.status(204).end();
+});
+
 app.get('/api/health', (req, res) => {
   res.json({status: 'ok'});
 });
