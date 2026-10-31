@@ -8,6 +8,29 @@ app.use(express.json());   // lets the server read JSON in request bodies
 
 const USER_ID = 1;         // temporary, until real login in Phase 3
 
+// Returns null if everything is fine, or { status, error } describing the problem
+function validateExpense(body) {
+  const { amount_cents, expense_date, category_id, payment_method } = body;
+
+  if (!Number.isInteger(amount_cents) || amount_cents <= 0) {
+    return { status: 400, error: 'amount_cents must be a whole number greater than 0' };
+  }
+  if (typeof expense_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(expense_date)) {
+    return { status: 400, error: 'expense_date must look like 2026-10-30' };
+  }
+  const method = payment_method ?? 'cash';
+  if (!['cash', 'card', 'bank_transfer', 'e_wallet'].includes(method)) {
+    return { status: 400, error: 'payment_method must be cash, card, bank_transfer or e_wallet' };
+  }
+  const category = db
+    .prepare('SELECT id FROM categories WHERE id = ? AND user_id = ?')
+    .get(category_id, USER_ID);
+  if (!category) {
+    return { status: 404, error: 'Category not found' };
+  }
+  return null;
+}
+
 // 3. Define a route: when someone visits "/", send back "Hello World"
 app.get('/', (req, res) => {
   res.send('Hello World');
@@ -57,39 +80,41 @@ app.get('/api/expenses', (req, res) => {
 });
 
 app.post('/api/expenses', (req, res) => {
+  const problem = validateExpense(req.body);
+  if (problem) {
+    return res.status(problem.status).json({ error: problem.error });
+  }
+
   const { amount_cents, description, expense_date, category_id, payment_method } = req.body;
-
-  // RULE 1: amount must be a whole number greater than 0
-  if (!Number.isInteger(amount_cents) || amount_cents <= 0) {
-    return res.status(400).json({ error: 'amount_cents must be a whole number greater than 0' });
-  }
-
-  // RULE 2: date must look like 2026-10-30
-  if (typeof expense_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(expense_date)) {
-    return res.status(400).json({ error: 'expense_date must look like 2026-10-30' });
-  }
-
-  // RULE 3: the category must exist and belong to this user
-  const category = db
-    .prepare('SELECT id FROM categories WHERE id = ? AND user_id = ?')
-    .get(category_id, USER_ID);
-
-  if (!category) {
-    return res.status(404).json({ error: 'Category not found' });
-  }
-
-  // Optional field: only these four payment methods are allowed
-  const method = payment_method ?? 'cash';
-  if (!['cash', 'card', 'bank_transfer', 'e_wallet'].includes(method)) {
-    return res.status(400).json({ error: 'payment_method must be cash, card, bank_transfer or e_wallet' });
-  }
 
   const result = db.prepare(`
     INSERT INTO expenses (user_id, category_id, amount_cents, description, expense_date, payment_method)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(USER_ID, category_id, amount_cents, description ?? null, expense_date, method);
+  `).run(USER_ID, category_id, amount_cents, description ?? null, expense_date, payment_method ?? 'cash');
 
   res.status(201).json({ id: result.lastInsertRowid });
+});
+
+app.put('/api/expenses/:id', (req, res) => {
+  const problem = validateExpense(req.body);
+  if (problem) {
+    return res.status(problem.status).json({ error: problem.error });
+  }
+
+  const { amount_cents, description, expense_date, category_id, payment_method } = req.body;
+
+  const result = db.prepare(`
+    UPDATE expenses
+    SET category_id = ?, amount_cents = ?, description = ?, expense_date = ?, payment_method = ?
+    WHERE id = ? AND user_id = ?
+  `).run(category_id, amount_cents, description ?? null, expense_date,
+         payment_method ?? 'cash', req.params.id, USER_ID);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Expense not found' });
+  }
+
+  res.json({ id: Number(req.params.id) });
 });
 
 app.delete('/api/expenses/:id', (req, res) => {
