@@ -1,19 +1,28 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import Login from './Login'
+import ExpenseList from './ExpenseList'
 
 function App() {
-  const [status, setStatus] = useState('loading...')
+  // We're logged in if a token is saved in the browser
+  const [loggedIn, setLoggedIn] = useState(Boolean(localStorage.getItem('token')))
 
-  useEffect(() => {
-    fetch('/api/health')
-      .then(res => res.json())
-      .then(data => setStatus(data.status))
-      .catch(() => setStatus('server not reachable'))
-  }, [])
+  function logout() {
+    localStorage.removeItem('token')
+    setLoggedIn(false)
+  }
 
   return (
     <div>
       <h1>Expense Tracker</h1>
-      <p>Server status: {status}</p>
+
+      {loggedIn ? (
+        <>
+          <button onClick={logout}>Log out</button>
+          <ExpenseList onLogout={logout} />
+        </>
+      ) : (
+        <Login onLogin={() => setLoggedIn(true)} />
+      )}
     </div>
   )
 }
