@@ -3,7 +3,7 @@
 //
 // How this file is organized:
 //   1. SETUP        - load libraries, create the app, settings
-//   2. HELPERS      - small functions that routes share
+//   2. HELPERS      - requireAuth (the login guard) and validation shared by routes
 //   3. ROUTES       - grouped by feature: general, auth, categories, expenses
 //   4. START SERVER - always last
 // =====================================================================
@@ -23,10 +23,6 @@ app.use(express.json());              // lets the server read JSON sent by clien
 // Secret used to sign login tokens. In production it comes from an environment variable.
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-secret-change-me';
 
-// TEMPORARY: pretend user number 1 is always logged in.
-// Step two of Phase 3 replaces this with the real user from the token.
-const USER_ID = 1;
-
 // Categories every new user starts with
 const DEFAULT_CATEGORIES = ['Food', 'Transport', 'Rent', 'Shopping', 'Bills', 'Other'];
 
@@ -35,9 +31,27 @@ const DEFAULT_CATEGORIES = ['Food', 'Transport', 'Rent', 'Shopping', 'Bills', 'O
 // 2. HELPERS
 // ---------------------------------------------------------------------
 
+// Middleware: lets a request through only if it carries a valid login token
+function requireAuth(req, res, next) {
+  const header = req.headers.authorization || '';   // "Bearer eyJhbGciOi..."
+  const [scheme, token] = header.split(' ');         // ["Bearer", "eyJhbGciOi..."]
+
+  if (scheme !== 'Bearer' || !token) {
+    return res.status(401).json({ error: 'Login required' });
+  }
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);   // throws if fake, edited or expired
+    req.userId = payload.userId;                     // remember who this is for the route
+    next();                                          // let the request continue
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
+
 // Checks the data for creating or editing an expense.
 // Returns null if everything is fine, or { status, error } describing the problem.
-function validateExpense(body) {
+function validateExpense(body, userId) {
   const { amount_cents, expense_date, category_id, payment_method } = body;
 
   // Rule 1: amount must be a whole number greater than 0
@@ -56,10 +70,10 @@ function validateExpense(body) {
     return { status: 400, error: 'payment_method must be cash, card, bank_transfer or e_wallet' };
   }
 
-  // Rule 4: the category must exist and belong to this user
+  // Rule 4: the category must exist and belong to the logged-in user
   const category = db
     .prepare('SELECT id FROM categories WHERE id = ? AND user_id = ?')
-    .get(category_id, USER_ID);
+    .get(category_id, userId);
   if (!category) {
     return { status: 404, error: 'Category not found' };
   }
@@ -157,18 +171,18 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 
-// ----- Categories -----
+// ----- Categories (login required) -----
 
 // GET /api/categories  -> list this user's categories
-app.get('/api/categories', (req, res) => {
+app.get('/api/categories', requireAuth, (req, res) => {
   const rows = db
     .prepare('SELECT id, name, color FROM categories WHERE user_id = ?')
-    .all(USER_ID);
+    .all(req.userId);
   res.json(rows);
 });
 
 // POST /api/categories  -> add a category
-app.post('/api/categories', (req, res) => {
+app.post('/api/categories', requireAuth, (req, res) => {
   const { name } = req.body;
 
   if (typeof name !== 'string' || name.trim() === '') {
@@ -178,7 +192,7 @@ app.post('/api/categories', (req, res) => {
   try {
     const result = db
       .prepare('INSERT INTO categories (user_id, name) VALUES (?, ?)')
-      .run(USER_ID, name.trim());
+      .run(req.userId, name.trim());
 
     res.status(201).json({ id: result.lastInsertRowid, name: name.trim() });
   } catch (err) {
@@ -191,10 +205,10 @@ app.post('/api/categories', (req, res) => {
 });
 
 
-// ----- Expenses -----
+// ----- Expenses (login required) -----
 
 // GET /api/expenses  -> list this user's expenses, newest first
-app.get('/api/expenses', (req, res) => {
+app.get('/api/expenses', requireAuth, (req, res) => {
   const rows = db.prepare(`
     SELECT e.id, e.amount_cents, e.description, e.expense_date,
            e.payment_method, c.name AS category
@@ -202,14 +216,14 @@ app.get('/api/expenses', (req, res) => {
     JOIN categories c ON c.id = e.category_id
     WHERE e.user_id = ?
     ORDER BY e.expense_date DESC, e.id DESC
-  `).all(USER_ID);
+  `).all(req.userId);
 
   res.json(rows);
 });
 
 // POST /api/expenses  -> add an expense
-app.post('/api/expenses', (req, res) => {
-  const problem = validateExpense(req.body);
+app.post('/api/expenses', requireAuth, (req, res) => {
+  const problem = validateExpense(req.body, req.userId);
   if (problem) {
     return res.status(problem.status).json({ error: problem.error });
   }
@@ -219,14 +233,14 @@ app.post('/api/expenses', (req, res) => {
   const result = db.prepare(`
     INSERT INTO expenses (user_id, category_id, amount_cents, description, expense_date, payment_method)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(USER_ID, category_id, amount_cents, description ?? null, expense_date, payment_method ?? 'cash');
+  `).run(req.userId, category_id, amount_cents, description ?? null, expense_date, payment_method ?? 'cash');
 
   res.status(201).json({ id: result.lastInsertRowid });
 });
 
 // PUT /api/expenses/:id  -> replace an expense with new data
-app.put('/api/expenses/:id', (req, res) => {
-  const problem = validateExpense(req.body);
+app.put('/api/expenses/:id', requireAuth, (req, res) => {
+  const problem = validateExpense(req.body, req.userId);
   if (problem) {
     return res.status(problem.status).json({ error: problem.error });
   }
@@ -238,7 +252,7 @@ app.put('/api/expenses/:id', (req, res) => {
     SET category_id = ?, amount_cents = ?, description = ?, expense_date = ?, payment_method = ?
     WHERE id = ? AND user_id = ?
   `).run(category_id, amount_cents, description ?? null, expense_date,
-         payment_method ?? 'cash', req.params.id, USER_ID);
+         payment_method ?? 'cash', req.params.id, req.userId);
 
   // changes = 0 means no row matched: wrong id, or it belongs to someone else
   if (result.changes === 0) {
@@ -249,10 +263,10 @@ app.put('/api/expenses/:id', (req, res) => {
 });
 
 // DELETE /api/expenses/:id  -> remove an expense
-app.delete('/api/expenses/:id', (req, res) => {
+app.delete('/api/expenses/:id', requireAuth, (req, res) => {
   const result = db
     .prepare('DELETE FROM expenses WHERE id = ? AND user_id = ?')
-    .run(req.params.id, USER_ID);
+    .run(req.params.id, req.userId);
 
   if (result.changes === 0) {
     return res.status(404).json({ error: 'Expense not found' });
