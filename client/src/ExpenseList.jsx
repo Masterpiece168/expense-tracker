@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from './api'
 import AddExpenseForm from './AddExpenseForm'
+import Dashboard from './Dashboard'
 
 function ExpenseList({ onLogout }) {
   const [expenses, setExpenses] = useState([])
@@ -34,6 +35,7 @@ function ExpenseList({ onLogout }) {
 
   return (
     <div>
+      <Dashboard expenses={expenses} />
       <AddExpenseForm onAdded={loadExpenses} />
 
       <h2>Your expenses</h2>

@@ -275,6 +275,30 @@ app.delete('/api/expenses/:id', requireAuth, (req, res) => {
   res.status(204).end();   // success, nothing to send back
 });
 
+// ----- Stats (login required) -----
+
+// GET /api/stats/monthly?month=2026-11  -> total and per-category totals for one month
+app.get('/api/stats/monthly', requireAuth, (req, res) => {
+  const month = req.query.month;   // the part after ? in the URL
+
+  if (typeof month !== 'string' || !/^\d{4}-\d{2}$/.test(month)) {
+    return res.status(400).json({ error: 'month must look like 2026-11' });
+  }
+
+  const byCategory = db.prepare(`
+    SELECT c.name AS category, SUM(e.amount_cents) AS total_cents
+    FROM expenses e
+    JOIN categories c ON c.id = e.category_id
+    WHERE e.user_id = ? AND substr(e.expense_date, 1, 7) = ?
+    GROUP BY c.id
+    ORDER BY total_cents DESC
+  `).all(req.userId, month);
+
+  const totalCents = byCategory.reduce((sum, row) => sum + row.total_cents, 0);
+
+  res.json({ month, total_cents: totalCents, by_category: byCategory });
+});
+
 
 // ---------------------------------------------------------------------
 // 4. START SERVER
