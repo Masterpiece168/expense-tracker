@@ -1,111 +1,382 @@
+/* =====================================================================
+   EXPENSE TRACKER STYLES
+   Sections: 1. colors  2. page basics  3. layout  4. cards  5. forms
+             6. buttons  7. table  8. small pieces  9. small screens
+   ===================================================================== */
+
+
+/* ---------- 1. COLORS ----------
+   Every color lives here as a variable. Change one value and the whole
+   app changes. The second block replaces them when the computer is in
+   dark mode. */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --text: #1c2030;
+  --muted: #667085;
+  --border: #e3e6ee;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --accent: #4f46e5;          /* chart bars, links */
+  --accent-soft: rgba(79, 70, 229, 0.1);
+  --btn-bg: #4f46e5;          /* main buttons */
+  --btn-bg-hover: #4338ca;
+  --btn-text: #ffffff;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  --danger: #c62828;
+  --danger-soft: rgba(198, 40, 40, 0.1);
+
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+    --bg: #0f1117;
+    --surface: #171a23;
+    --text: #e8eaf0;
+    --muted: #9aa3b2;
+    --border: #272c3a;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --accent: #8b93ff;
+    --accent-soft: rgba(139, 147, 255, 0.14);
+    --btn-bg: #6366f1;
+    --btn-bg-hover: #7578f5;
+
+    --danger: #ff8a80;
+    --danger-soft: rgba(255, 138, 128, 0.14);
+
+    --shadow: none;
   }
+}
+
+
+/* ---------- 2. PAGE BASICS ---------- */
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+h1, h2, h3, p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+h2 {
+  font-size: 18px;
+  font-weight: 600;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+
+/* ---------- 3. LAYOUT ---------- */
+.app {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.app-header.centered {
+  justify-content: center;     /* logged-out screen: title in the middle */
+}
+
+.app-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* ---------- 4. CARDS ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+
+/* ---------- 5. FORMS ---------- */
+input,
+select {
+  height: 40px;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+input::placeholder {
+  color: var(--muted);
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Add-expense form: fields flow into a grid that wraps by itself */
+.add-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.add-form h3,
+.add-form .error {
+  grid-column: 1 / -1;
+}
+
+/* Login / register card */
+.auth {
+  max-width: 380px;
+  margin: 40px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.auth button {
+  width: 100%;
+}
+
+
+/* ---------- 6. BUTTONS ---------- */
+button {
+  height: 40px;
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--btn-text);
+  background: var(--btn-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+button:hover {
+  background: var(--btn-bg-hover);
+}
+
+/* Quiet button: outline only (Log out, switch login/register) */
+.btn-ghost {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--accent-soft);
+}
+
+/* Small red button inside table rows */
+.btn-danger {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--danger);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.btn-danger:hover {
+  background: var(--danger-soft);
+}
+
+
+/* ---------- 7. TABLE ---------- */
+.table-wrap {
+  overflow-x: auto;           /* scroll sideways on a narrow phone */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--accent-soft);
+}
+
+th.num,
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;   /* digits line up in a column */
+}
+
+td.num {
+  font-weight: 600;
+}
+
+
+/* ---------- 8. SMALL PIECES ---------- */
+.error {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-radius: 8px;
+}
+
+.empty {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-value {
+  margin-bottom: 8px;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  margin-top: 12px;
+  padding-top: 12px;
+  text-align: right;
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
+
+
+/* ---------- 9. SMALL SCREENS ---------- */
+@media (max-width: 600px) {
+  .app {
+    padding: 16px 12px 32px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .app-header h1 {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  /* The table becomes a list of small cards, so nothing is cut off:
+       description ............ amount
+       date   category ........ Delete   */
+  thead {
+    display: none;
+  }
+
+  table, tbody {
+    display: block;
+  }
+
+  tbody tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "desc desc amt"
+      "date cat  del";
+    align-items: center;
+    gap: 4px 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  td {
+    padding: 0;
+    border-bottom: none;
+    white-space: normal;
+  }
+
+  .c-desc { grid-area: desc; font-weight: 500; }
+  .c-amt  { grid-area: amt; font-size: 17px; }
+  .c-date { grid-area: date; font-size: 14px; color: var(--muted); }
+  .c-cat  { grid-area: cat; }
+  .c-del  { grid-area: del; }
 }

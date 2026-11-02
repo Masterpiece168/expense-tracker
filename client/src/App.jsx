@@ -12,14 +12,16 @@ function App() {
   }
 
   return (
-    <div>
-      <h1>Expense Tracker</h1>
+    <div className="app">
+      <header className={loggedIn ? 'app-header' : 'app-header centered'}>
+        <h1>Expense Tracker</h1>
+        {loggedIn && (
+          <button className="btn-ghost" onClick={logout}>Log out</button>
+        )}
+      </header>
 
       {loggedIn ? (
-        <>
-          <button onClick={logout}>Log out</button>
-          <ExpenseList onLogout={logout} />
-        </>
+        <ExpenseList onLogout={logout} />
       ) : (
         <Login onLogin={() => setLoggedIn(true)} />
       )}

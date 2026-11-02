@@ -34,7 +34,7 @@ function Login({ onLogin }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="card auth" onSubmit={handleSubmit}>
       <h2>{isRegister ? 'Create account' : 'Log in'}</h2>
 
       {isRegister && (
@@ -45,14 +45,12 @@ function Login({ onLogin }) {
       <input type="password" placeholder="Password (8+ characters)" value={password}
              onChange={e => setPassword(e.target.value)} />
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       <button type="submit">{isRegister ? 'Register' : 'Log in'}</button>
-      <p>
-        <button type="button" onClick={() => setIsRegister(!isRegister)}>
-          {isRegister ? 'I already have an account' : 'Create an account'}
-        </button>
-      </p>
+      <button type="button" className="btn-ghost" onClick={() => setIsRegister(!isRegister)}>
+        {isRegister ? 'I already have an account' : 'Create an account'}
+      </button>
     </form>
   )
 }

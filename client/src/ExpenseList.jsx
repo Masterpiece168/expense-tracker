@@ -34,37 +34,52 @@ function ExpenseList({ onLogout }) {
   const totalCents = expenses.reduce((sum, e) => sum + e.amount_cents, 0)
 
   return (
-    <div>
+    <div className="stack">
       <Dashboard expenses={expenses} />
       <AddExpenseForm onAdded={loadExpenses} />
 
-      <h2>Your expenses</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <section className="card">
+        <div className="card-head">
+          <h2>Your expenses</h2>
+        </div>
 
-      {expenses.length === 0 ? (
-        <p>No expenses yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.map(e => (
-              <tr key={e.id}>
-                <td>{e.expense_date}</td>
-                <td>{e.description}</td>
-                <td>{e.category}</td>
-                <td>${(e.amount_cents / 100).toFixed(2)}</td>
-                <td><button onClick={() => handleDelete(e.id)}>Delete</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        {error && <p className="error">{error}</p>}
 
-      <p><strong>Total: ${(totalCents / 100).toFixed(2)}</strong></p>
+        {expenses.length === 0 ? (
+          <p className="empty">No expenses yet. Add your first one above.</p>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th className="num">Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.map(e => (
+                  <tr key={e.id}>
+                    <td className="c-date">{e.expense_date}</td>
+                    <td className="c-desc">{e.description}</td>
+                    <td className="c-cat"><span className="pill">{e.category}</span></td>
+                    <td className="c-amt num">${(e.amount_cents / 100).toFixed(2)}</td>
+                    <td className="c-del num">
+                      <button className="btn-danger" onClick={() => handleDelete(e.id)}>
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <p className="total">Total: ${(totalCents / 100).toFixed(2)}</p>
+      </section>
     </div>
   )
 }

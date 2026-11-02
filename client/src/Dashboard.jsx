@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
+} from 'recharts'
 import { api } from './api'
 
 function Dashboard({ expenses }) {
@@ -20,34 +22,51 @@ function Dashboard({ expenses }) {
     : []
 
   return (
-    <div>
-      <h2>Dashboard</h2>
+    <section className="card">
+      <div className="card-head">
+        <h2>Dashboard</h2>
+        <input type="month" value={month} onChange={e => setMonth(e.target.value)}
+               aria-label="Month" />
+      </div>
 
-      <label>
-        Month: <input type="month" value={month} onChange={e => setMonth(e.target.value)} />
-      </label>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {stats && (
         <>
-          <p><strong>Spent in {stats.month}: ${(stats.total_cents / 100).toFixed(2)}</strong></p>
+          <p className="stat-label">Spent in {stats.month}</p>
+          <p className="stat-value">${(stats.total_cents / 100).toFixed(2)}</p>
 
           {chartData.length === 0 ? (
-            <p>No expenses this month.</p>
+            <p className="empty">No expenses this month.</p>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={chartData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={value => `$${value.toFixed(2)}`} />
-                <Bar dataKey="dollars" fill="#6366f1" />
+                <CartesianGrid vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="name" tickLine={false} stroke="var(--border)"
+                       tick={{ fill: 'var(--muted)', fontSize: 13 }} />
+                <YAxis width={52} tickLine={false} axisLine={false}
+                       tickFormatter={v => `$${v}`}
+                       tick={{ fill: 'var(--muted)', fontSize: 13 }} />
+                <Tooltip
+                  formatter={value => `$${value.toFixed(2)}`}
+                  cursor={{ fill: 'var(--accent-soft)' }}
+                  contentStyle={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    color: 'var(--text)',
+                  }}
+                  itemStyle={{ color: 'var(--text)' }}
+                  labelStyle={{ color: 'var(--muted)' }}
+                />
+                <Bar dataKey="dollars" name="Spent" fill="var(--accent)" radius={[6, 6, 0, 0]}
+                     maxBarSize={64} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </>
       )}
-    </div>
+    </section>
   )
 }
 

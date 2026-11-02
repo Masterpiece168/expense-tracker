@@ -56,13 +56,13 @@ function AddExpenseForm({ onAdded }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="card add-form" onSubmit={handleSubmit}>
       <h3>Add an expense</h3>
 
-      <input type="number" step="0.01" placeholder="Amount (e.g. 12.50)"
+      <input type="number" step="0.01" placeholder="Amount"
              value={amount} onChange={e => setAmount(e.target.value)} />
 
-      <input placeholder="Description (optional)"
+      <input placeholder="Description"
              value={description} onChange={e => setDescription(e.target.value)} />
 
       <input type="date" value={date} onChange={e => setDate(e.target.value)} />
@@ -80,8 +80,9 @@ function AddExpenseForm({ onAdded }) {
         <option value="e_wallet">E-wallet</option>
       </select>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <button type="submit">Add</button>
+      <button type="submit">Add expense</button>
+
+      {error && <p className="error">{error}</p>}
     </form>
   )
 }
