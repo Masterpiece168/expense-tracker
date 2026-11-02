@@ -1,7 +1,7 @@
 const Database = require('better-sqlite3');
 
 // Opens the file "expenses.db", or creates it if it doesn't exist
-const db = new Database('expenses.db');
+const db = new Database(process.env.DB_PATH || 'expenses.db');
 
 // SQLite ignores foreign keys unless you turn this on for every connection
 db.pragma('foreign_keys = ON');

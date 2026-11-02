@@ -5,7 +5,7 @@
 //   1. SETUP        - load libraries, create the app, settings
 //   2. HELPERS      - requireAuth (the login guard) and validation shared by routes
 //   3. ROUTES       - grouped by feature: general, auth, categories, expenses
-//   4. START SERVER - always last
+//   4. START SERVER - serves the React app, then starts listening (always last)
 // =====================================================================
 
 
@@ -16,12 +16,18 @@ const express = require('express');   // the web framework (like Spring Boot, bu
 const bcrypt = require('bcryptjs');   // scrambles passwords into hashes
 const jwt = require('jsonwebtoken');  // creates and checks login tokens
 const db = require('./db');           // our SQLite database (see db.js)
+const path = require('path');       // builds file paths that work on any operating system
 
 const app = express();
 app.use(express.json());              // lets the server read JSON sent by clients
 
 // Secret used to sign login tokens. In production it comes from an environment variable.
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-secret-change-me';
+
+// In production, refuse to start with the public dev secret. Anyone could forge tokens.
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set in production');
+}
 
 // Categories every new user starts with
 const DEFAULT_CATEGORIES = ['Food', 'Transport', 'Rent', 'Shopping', 'Bills', 'Other'];
@@ -87,10 +93,6 @@ function validateExpense(body, userId) {
 // ---------------------------------------------------------------------
 
 // ----- General -----
-
-app.get('/', (req, res) => {
-  res.send('Hello World');
-});
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -301,8 +303,21 @@ app.get('/api/stats/monthly', requireAuth, (req, res) => {
 
 
 // ---------------------------------------------------------------------
-// 4. START SERVER
+// 4. SERVE THE REACT APP, THEN START
 // ---------------------------------------------------------------------
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+const clientBuild = path.join(__dirname, 'client', 'dist');
+
+app.use(express.static(clientBuild));                        // the built React files
+
+// Any /api path that matched no route above is a real "not found", not a web page
+app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
+// Everything else gets the React app (it handles its own screens)
+app.get('/{*splat}', (req, res) => {
+  res.sendFile(path.join(clientBuild, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
